@@ -62,11 +62,31 @@ def add_search_type(terms, stype):
         new_terms = new_terms.replace(word, word + stype, 1)
     return new_terms
 
+
+def get_html_head(terms):
+    html = '<!DOCTYPE html>'
+    html += '\n<html>'
+    html += '\n<head>'
+    html += '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">'
+    html += '<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>'
+    html += '\n</head>'
+    html += '\n<title>Search Results</title>\n<body>'
+    html += '\n<h1>Search Result</h1>'
+    html += '\n<table class="table table-hover">'
+    html += '\n<tr><td>%s</td><td>%s</td></tr>' % ('Search terms', terms)
+    return html
+
+
+def get_html_tail():
+    html = '\n</table></body></html>'
+    return html
+
 def to_html(data, terms):
     '''Converts data to HTML format'''
-    html = '''<html><title>Search Results</title><body><table>'''
+
+    html = ''
     records = Medline.parse(data)
-    font_format = '<font color="red"><b>%s</b></font>'
+    font_format = '<font color="red"><strong>%s</strong></font>'
     for rec in records:
         for word in terms.split(' '):
 
@@ -89,8 +109,26 @@ def to_html(data, terms):
 
         for key, value in rec.iteritems():
             if key in ('TI', 'AU', 'AB', 'PMID', 'DP'):
-                html += '<tr><td>%s</td><td>%s</td></tr>' % (key, value)
-    html += '''</table></body></html>'''
+                if key == 'AB':
+                    html += \
+                        '\n<tr class="success"><td>%s</td>' \
+                        '<td>%s</td></tr>' % (key, value)
+                elif key == 'TI':
+                    html += \
+                        '\n<tr class="active"><td>%s</td>' \
+                        '<td><strong>%s</strong></td></tr>' % (key, value)
+                elif key == 'PMID':
+                    html += \
+                        '\n<tr><td>%s</td>' \
+                        '<td><a href=http://www.ncbi.nlm.nih.gov/pubmed?' \
+                        'term=%s%%5BPMID%%5D>%s</a></td></tr>' \
+                        % (key, value, value)
+                elif key == 'AU':
+                    html += \
+                        '\n<tr><td>%s</td>' \
+                        '<td>%s</td></tr>' % (key, ', '.join(value))
+                else:
+                    html += '\n<tr><td>%s</td><td>%s</td></tr>' % (key, value)
     return html
 
 
@@ -103,7 +141,10 @@ def main():
         search_term_with_types = add_search_type(search_term, '[Title/Abstract]')
         print('Search term(s) = %s' % search_term_with_types)
         count = get_search_count(search_term_with_types)
-        answer = raw_input('Download all articles? [Y/n]: ')
+        if count > 0:
+            answer = raw_input('Download all articles? [Y/n]: ')
+        else:
+            continue
 
         if answer.lower() == 'y' or answer.lower() == '':
             # use history feature for searching
@@ -117,12 +158,12 @@ def main():
             query_key = search_results['QueryKey']
 
             batch_size = 5
-            # out_handle = open('%s.txt' % '_'.join(terms.split(' AND ')), 'w')
             out_html_handle = open('results.html', 'w')
 
             if count > MAX_ARTICLES:
                 count = MAX_ARTICLES  # limit the number of articles
 
+            html = get_html_head(search_term_with_types)
             for start in range(0, count, batch_size):
                 end = min(count, start + batch_size)
                 print('Downloading record %i to %i' %
@@ -132,15 +173,17 @@ def main():
                                             retmax=batch_size, webenv=webenv,
                                             query_key=query_key)
 
-                html = to_html(fetch_handle, search_term)
-                # out_handle.write(data)
-                out_html_handle.write(html)
+                html += to_html(fetch_handle, search_term)
                 print('Sleeping...')
                 time.sleep(5)
 
-            # out_handle.close()
+            html += get_html_tail()
+            out_html_handle.write(html)
+            out_html_handle.close()
             quit = raw_input('Quit? [y/N]: ')
-            if quit.lower() == 'y': break
+            if quit.lower() == 'y':
+                break
+
         else:
             continue
 
