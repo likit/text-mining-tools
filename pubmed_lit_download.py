@@ -120,9 +120,9 @@ def to_html(data, terms):
                 elif key == 'PMID':
                     html += \
                         '\n<tr><td>%s</td>' \
-                        '<td><a href=http://www.ncbi.nlm.nih.gov/pubmed?' \
-                        'term=%s%%5BPMID%%5D>%s</a></td></tr>' \
-                        % (key, value, value)
+                        '<td><a href="http://www.ncbi.nlm.nih.gov/pubmed?' \
+                        'term=%s%%5BPMID%%5D" target="_blank">' \
+                        '%s</a></td></tr>' % (key, value, value)
                 elif key == 'AU':
                     html += \
                         '\n<tr><td>%s</td>' \
