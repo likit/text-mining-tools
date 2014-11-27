@@ -74,14 +74,14 @@ def to_html(data, terms):
             if (word == 'and' or word == 'or' or word == 'not'):
                 continue
 
-            rec['TI'] = rec['TI'].replace(word, font_format % word)
+            rec['TI'] = rec['TI'].replace(word.lower(), font_format % word)
             rec['TI'] = rec['TI'].replace(word.title(),
                     font_format % word.title())
             rec['TI'] = rec['TI'].replace(word.upper(),
                     font_format % word.upper())
 
             if 'AB' in rec.keys():
-                rec['AB'] = rec['AB'].replace(word, font_format % word)
+                rec['AB'] = rec['AB'].replace(word.lower(), font_format % word)
                 rec['AB'] = rec['AB'].replace(word.title(),
                         font_format % word.title())
                 rec['AB'] = rec['AB'].replace(word.upper(),
